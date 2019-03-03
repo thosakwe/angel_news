@@ -9,6 +9,8 @@ dependencies:
   angel_file_service: ^2.0.0
   angel_framework: ^2.0.0-alpha
   angel_jael: ^2.0.0
+  angel_migration: ^2.0.0-alpha
+  angel_orm: ^2.0.0-dev
   angel_paginate: ^2.0.0
   angel_static: ^2.0.0
   angel_validate: ^2.0.0
@@ -17,6 +19,8 @@ dependencies:
   timeago: ^1.0.0
 dev_dependencies: 
   angel_hot: ^2.0.0
+  angel_migration_runner: ^2.0.0-alpha
+  angel_orm_generator: ^2.0.0-dev
   angel_serialize_generator: ^2.0.0
   build_runner: ^1.0.0
   console: ^3.0.0

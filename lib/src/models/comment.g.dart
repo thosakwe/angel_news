@@ -3,6 +3,137 @@
 part of 'comment.dart';
 
 // **************************************************************************
+// OrmGenerator
+// **************************************************************************
+
+class CommentQuery extends Query<Comment, CommentQueryWhere> {
+  CommentQuery({Set<String> trampoline}) {
+    trampoline ??= Set();
+    trampoline.add(tableName);
+    _where = CommentQueryWhere(this);
+  }
+
+  @override
+  final CommentQueryValues values = CommentQueryValues();
+
+  CommentQueryWhere _where;
+
+  @override
+  get casts {
+    return {};
+  }
+
+  @override
+  get tableName {
+    return 'comments';
+  }
+
+  @override
+  get fields {
+    return const ['id', 'user_id', 'post_id', 'parent_id', 'text', 'karma'];
+  }
+
+  @override
+  CommentQueryWhere get where {
+    return _where;
+  }
+
+  @override
+  CommentQueryWhere newWhereClause() {
+    return CommentQueryWhere(this);
+  }
+
+  static Comment parseRow(List row) {
+    if (row.every((x) => x == null)) return null;
+    var model = Comment(
+        id: row[0].toString(),
+        userId: (row[1] as int),
+        postId: (row[2] as int),
+        parentId: (row[3] as int),
+        text: (row[4] as String),
+        karma: (row[5] as int));
+    return model;
+  }
+
+  @override
+  deserialize(List row) {
+    return parseRow(row);
+  }
+}
+
+class CommentQueryWhere extends QueryWhere {
+  CommentQueryWhere(CommentQuery query)
+      : id = NumericSqlExpressionBuilder<int>(query, 'id'),
+        userId = NumericSqlExpressionBuilder<int>(query, 'user_id'),
+        postId = NumericSqlExpressionBuilder<int>(query, 'post_id'),
+        parentId = NumericSqlExpressionBuilder<int>(query, 'parent_id'),
+        text = StringSqlExpressionBuilder(query, 'text'),
+        karma = NumericSqlExpressionBuilder<int>(query, 'karma');
+
+  final NumericSqlExpressionBuilder<int> id;
+
+  final NumericSqlExpressionBuilder<int> userId;
+
+  final NumericSqlExpressionBuilder<int> postId;
+
+  final NumericSqlExpressionBuilder<int> parentId;
+
+  final StringSqlExpressionBuilder text;
+
+  final NumericSqlExpressionBuilder<int> karma;
+
+  @override
+  get expressionBuilders {
+    return [id, userId, postId, parentId, text, karma];
+  }
+}
+
+class CommentQueryValues extends MapQueryValues {
+  @override
+  get casts {
+    return {};
+  }
+
+  int get id {
+    return (values['id'] as int);
+  }
+
+  set id(int value) => values['id'] = value;
+  int get userId {
+    return (values['user_id'] as int);
+  }
+
+  set userId(int value) => values['user_id'] = value;
+  int get postId {
+    return (values['post_id'] as int);
+  }
+
+  set postId(int value) => values['post_id'] = value;
+  int get parentId {
+    return (values['parent_id'] as int);
+  }
+
+  set parentId(int value) => values['parent_id'] = value;
+  String get text {
+    return (values['text'] as String);
+  }
+
+  set text(String value) => values['text'] = value;
+  int get karma {
+    return (values['karma'] as int);
+  }
+
+  set karma(int value) => values['karma'] = value;
+  void copyFrom(Comment model) {
+    userId = model.userId;
+    postId = model.postId;
+    parentId = model.parentId;
+    text = model.text;
+    karma = model.karma;
+  }
+}
+
+// **************************************************************************
 // JsonModelGenerator
 // **************************************************************************
 
@@ -23,13 +154,13 @@ class Comment extends _Comment {
   final String id;
 
   @override
-  final String userId;
+  final int userId;
 
   @override
-  final String postId;
+  final int postId;
 
   @override
-  final String parentId;
+  final int parentId;
 
   @override
   final String text;
@@ -48,9 +179,9 @@ class Comment extends _Comment {
 
   Comment copyWith(
       {String id,
-      String userId,
-      String postId,
-      String parentId,
+      int userId,
+      int postId,
+      int parentId,
       String text,
       int karma,
       dynamic user,
@@ -109,9 +240,9 @@ abstract class CommentSerializer {
   static Comment fromMap(Map map) {
     return new Comment(
         id: map['id'] as String,
-        userId: map['user_id'] as String,
-        postId: map['post_id'] as String,
-        parentId: map['parent_id'] as String,
+        userId: map['user_id'] as int,
+        postId: map['post_id'] as int,
+        parentId: map['parent_id'] as int,
         text: map['text'] as String,
         karma: map['karma'] as int,
         user: map['user'] as dynamic,

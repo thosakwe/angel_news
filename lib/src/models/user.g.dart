@@ -3,6 +3,179 @@
 part of 'user.dart';
 
 // **************************************************************************
+// MigrationGenerator
+// **************************************************************************
+
+class UserMigration extends Migration {
+  @override
+  up(Schema schema) {
+    schema.create('users', (table) {
+      table.serial('id')..primaryKey();
+      table.varChar('username');
+      table.varChar('password');
+      table.varChar('salt');
+      table.integer('karma');
+      table.timeStamp('created_at');
+      table.timeStamp('updated_at');
+    });
+  }
+
+  @override
+  down(Schema schema) {
+    schema.drop('users');
+  }
+}
+
+// **************************************************************************
+// OrmGenerator
+// **************************************************************************
+
+class UserQuery extends Query<User, UserQueryWhere> {
+  UserQuery({Set<String> trampoline}) {
+    trampoline ??= Set();
+    trampoline.add(tableName);
+    _where = UserQueryWhere(this);
+  }
+
+  @override
+  final UserQueryValues values = UserQueryValues();
+
+  UserQueryWhere _where;
+
+  @override
+  get casts {
+    return {};
+  }
+
+  @override
+  get tableName {
+    return 'users';
+  }
+
+  @override
+  get fields {
+    return const [
+      'id',
+      'username',
+      'password',
+      'salt',
+      'karma',
+      'created_at',
+      'updated_at'
+    ];
+  }
+
+  @override
+  UserQueryWhere get where {
+    return _where;
+  }
+
+  @override
+  UserQueryWhere newWhereClause() {
+    return UserQueryWhere(this);
+  }
+
+  static User parseRow(List row) {
+    if (row.every((x) => x == null)) return null;
+    var model = User(
+        id: row[0].toString(),
+        username: (row[1] as String),
+        password: (row[2] as String),
+        salt: (row[3] as String),
+        karma: (row[4] as int),
+        createdAt: (row[5] as DateTime),
+        updatedAt: (row[6] as DateTime));
+    return model;
+  }
+
+  @override
+  deserialize(List row) {
+    return parseRow(row);
+  }
+}
+
+class UserQueryWhere extends QueryWhere {
+  UserQueryWhere(UserQuery query)
+      : id = NumericSqlExpressionBuilder<int>(query, 'id'),
+        username = StringSqlExpressionBuilder(query, 'username'),
+        password = StringSqlExpressionBuilder(query, 'password'),
+        salt = StringSqlExpressionBuilder(query, 'salt'),
+        karma = NumericSqlExpressionBuilder<int>(query, 'karma'),
+        createdAt = DateTimeSqlExpressionBuilder(query, 'created_at'),
+        updatedAt = DateTimeSqlExpressionBuilder(query, 'updated_at');
+
+  final NumericSqlExpressionBuilder<int> id;
+
+  final StringSqlExpressionBuilder username;
+
+  final StringSqlExpressionBuilder password;
+
+  final StringSqlExpressionBuilder salt;
+
+  final NumericSqlExpressionBuilder<int> karma;
+
+  final DateTimeSqlExpressionBuilder createdAt;
+
+  final DateTimeSqlExpressionBuilder updatedAt;
+
+  @override
+  get expressionBuilders {
+    return [id, username, password, salt, karma, createdAt, updatedAt];
+  }
+}
+
+class UserQueryValues extends MapQueryValues {
+  @override
+  get casts {
+    return {};
+  }
+
+  int get id {
+    return (values['id'] as int);
+  }
+
+  set id(int value) => values['id'] = value;
+  String get username {
+    return (values['username'] as String);
+  }
+
+  set username(String value) => values['username'] = value;
+  String get password {
+    return (values['password'] as String);
+  }
+
+  set password(String value) => values['password'] = value;
+  String get salt {
+    return (values['salt'] as String);
+  }
+
+  set salt(String value) => values['salt'] = value;
+  int get karma {
+    return (values['karma'] as int);
+  }
+
+  set karma(int value) => values['karma'] = value;
+  DateTime get createdAt {
+    return (values['created_at'] as DateTime);
+  }
+
+  set createdAt(DateTime value) => values['created_at'] = value;
+  DateTime get updatedAt {
+    return (values['updated_at'] as DateTime);
+  }
+
+  set updatedAt(DateTime value) => values['updated_at'] = value;
+  void copyFrom(User model) {
+    username = model.username;
+    password = model.password;
+    salt = model.salt;
+    karma = model.karma;
+    createdAt = model.createdAt;
+    updatedAt = model.updatedAt;
+  }
+}
+
+// **************************************************************************
 // JsonModelGenerator
 // **************************************************************************
 

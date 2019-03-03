@@ -1,6 +1,6 @@
 import 'package:angel_model/angel_model.dart';
+import 'package:angel_orm/angel_orm.dart';
 import 'package:angel_serialize/angel_serialize.dart';
-import 'package:collection/collection.dart';
 import 'package:timeago/timeago.dart';
 import 'user.dart';
 part 'post.g.dart';
@@ -8,6 +8,7 @@ part 'post.g.dart';
 enum PostType { normal, askAN, showAN }
 
 @serializable
+@orm
 abstract class _Post extends Model {
   String get userId;
 
