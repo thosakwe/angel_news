@@ -7,12 +7,14 @@ import 'auth_callback.dart';
 import 'find_user.dart';
 import 'hash_user_password.dart';
 
-Function createAccount(AngelAuth<User> auth, String pepper) {
+RequestHandler createAccount(AngelAuth<User> auth, String pepper) {
   // Angel's IoC container will ensure that all these parameters are available at runtime.
-  return (RequestContext req, ResponseContext res, Services services,
-      Uuid uuid) async {
+  return (req, res) async {
     // Grab the data from the request body.
-    String username = req.body['username'], password = req.body['password'];
+    var services = req.container.make<Services>();
+    var uuid = req.container.make<Uuid>();
+    var username = req.bodyAsMap['username'] as String,
+        password = req.bodyAsMap['password'] as String;
 
     // If a user already exists, see if we can just sign them in instead.
     var user = await findUser(username, services);

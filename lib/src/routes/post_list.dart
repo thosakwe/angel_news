@@ -1,14 +1,14 @@
 import 'dart:async';
 import 'package:angel_framework/angel_framework.dart';
 import 'package:angel_paginate/angel_paginate.dart';
-import 'package:dart2_tryparse/dart2_tryparse.dart';
 import 'package:hn/src/models/models.dart';
 import 'package:hn/src/services.dart';
 import 'package:pooled_map/pooled_map.dart';
 
 AngelConfigurer configureServer(Services services) {
   return (Angel app) async {
-    app.get('/post/:id', (String id, ResponseContext res) async {
+    app.get('/post/:id', (req, res) async {
+      var id = req.params['id'];
       var post = await services.postService
           .read(id)
           .then((map) => PostSerializer.fromMap(map as Map));
@@ -66,14 +66,14 @@ int sortTopPosts(Post a, Post b) {
   return b.karma.compareTo(a.karma);
 }
 
-Function showPostList(
+RequestHandler showPostList(
     String title, Map<String, dynamic> Function(RequestContext) query,
     {Iterable<Post> Function(List<Post>) filter}) {
-  return (Services services, RequestContext req, ResponseContext res,
+  return ioc((Services services, RequestContext req, ResponseContext res,
       {user}) async {
     var paginator = await fetchPosts(query(req), req, services, filter: filter);
     await res.render('posts', {'title': title, 'paginator': paginator});
-  };
+  });
 }
 
 /// Fetches posts from the database, and paginates them.
@@ -109,9 +109,10 @@ Future<Paginator<Post>> fetchPosts(
 
   var paginator = new Paginator<Post>(
     posts,
-    itemsPerPage: tryParseInt(req.query['items_per_page'].toString()) ?? 30,
+    itemsPerPage:
+        int.tryParse(req.queryParameters['items_per_page'].toString()) ?? 30,
   );
 
-  paginator.goToPage(tryParseInt(req.query['page'].toString()) ?? 1);
+  paginator.goToPage(int.tryParse(req.queryParameters['page'].toString()) ?? 1);
   return paginator;
 }

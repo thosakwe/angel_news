@@ -15,9 +15,9 @@ void Function(Router) authRoutes(AngelAuth<User> auth, String pepper) {
     ),
   );
 
-  var logoutHandler = waterfall([
-    auth.logout,
-    (ResponseContext res) => res.redirect('/'),
+  var logoutHandler = chain([
+    auth.logout(),
+    (req, res) => res.redirect('/'),
   ]);
 
   // We also want to sign users up, at /auth/create_account.
@@ -31,7 +31,7 @@ void Function(Router) authRoutes(AngelAuth<User> auth, String pepper) {
     'goto': isString
   });
 
-  var createAccountHandler = waterfall([
+  var createAccountHandler = chain([
     validate(createAccountValidator),
     createAccount(auth, pepper),
   ]);

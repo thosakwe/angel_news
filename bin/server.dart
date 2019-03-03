@@ -10,19 +10,19 @@ main() async {
   Logger logger;
 
   Future<Angel> createServer() async {
-    var app = new Angel()..lazyParseBodies = true;
+    var app = Angel();
     app.logger =
-        logger ??= new Logger('hacker_news')..onRecord.listen(hn.prettyLog);
+        logger ??= Logger('hacker_news')..onRecord.listen(hn.prettyLog);
     await app.configure(hn.configureServer);
     return app;
   }
 
-  var hot = new HotReloader(createServer, [
+  var hot = HotReloader(createServer, [
     // We can listen for changes at a multitude of paths.
-    new Directory('bin'),
-    new Directory('config'),
-    new Directory('lib'),
-    new File('pubspec.lock')
+    Directory('bin'),
+    Directory('config'),
+    Directory('lib'),
+    File('pubspec.lock')
   ]);
 
   var server = await hot.startServer('127.0.0.1', 3000);

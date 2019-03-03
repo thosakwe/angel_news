@@ -1,9 +1,6 @@
 import 'package:angel_model/angel_model.dart';
 import 'package:angel_serialize/angel_serialize.dart';
-
 part 'vote.g.dart';
-
-part 'vote.serializer.g.dart';
 
 enum VoteType { upvote, downvote }
 

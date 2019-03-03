@@ -1,6 +1,5 @@
 import 'package:angel_file_service/angel_file_service.dart';
 import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_framework/hooks.dart' as hooks;
 import 'package:file/file.dart';
 
 /// We are abstracting access to our database, using Angel's [Service] API.
@@ -12,6 +11,7 @@ import 'package:file/file.dart';
 class Services {
   final Angel app;
   final FileSystem fs;
+  Map<String, HookedService> _cache = {};
 
   Services(this.app, this.fs) {
     dbDir.createSync(recursive: true);
@@ -28,15 +28,21 @@ class Services {
   HookedService get voteService => _findService('vote', 'votes');
 
   HookedService _findService(String name, String filename) {
-    return app.injections.putIfAbsent('${name}Service', () {
+    var key = '${name}Service';
+    return _cache.putIfAbsent(key, () {
       var service = new HookedService(
           new JsonFileService(dbDir.childFile('${filename}_db.json')));
 
       // Insert timestamps upon data entry...
-      service.beforeCreated.listen(hooks.addCreatedAt(key: 'created_at'));
-      service.beforeModify(hooks.addUpdatedAt(key: 'updated_at'));
+      service
+        ..beforeCreated.listen((e) {
+          (e.data as Map)['created_at'] = DateTime.now().toUtc();
+        })
+        ..beforeModify((e) {
+          (e.data as Map)['created_at'] = DateTime.now().toUtc();
+        });
 
       return service;
-    }) as HookedService;
+    });
   }
 }

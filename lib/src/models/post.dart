@@ -3,10 +3,7 @@ import 'package:angel_serialize/angel_serialize.dart';
 import 'package:collection/collection.dart';
 import 'package:timeago/timeago.dart';
 import 'user.dart';
-
 part 'post.g.dart';
-
-part 'post.serializer.g.dart';
 
 enum PostType { normal, askAN, showAN }
 

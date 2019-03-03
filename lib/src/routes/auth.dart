@@ -18,7 +18,7 @@ AngelConfigurer configureServer(Services services) {
     );
 
     // Decode JWT's sent to the server on each request.
-    app.use(auth.decodeJwt);
+    app.fallback(auth.decodeJwt);
 
     // A function that serializes a user for a JWT.
     auth.serializer = (u) => u.id;
@@ -31,19 +31,17 @@ AngelConfigurer configureServer(Services services) {
     };
 
     // Inject the current user + path into `res.render`, since the user is parsed here.
-    app.use((RequestContext req, ResponseContext res) {
+    app.fallback((req, res) {
       res.renderParams
-          .addAll({'user': req.properties['user'], 'path': req.uri.path});
+          .addAll({'user': req.container.make<User>(), 'path': req.uri.path});
       return true;
     });
 
     await app.configure(auth.configureServer);
 
-    auth.strategies.add(
-      new LocalAuthStrategy(
-        localAuthVerifier(services, pepper),
-        allowBasic: false,
-      ),
+    auth.strategies['local'] = LocalAuthStrategy(
+      localAuthVerifier(services, pepper),
+      allowBasic: false,
     );
 
     app.group('/auth', authRoutes(auth, pepper));

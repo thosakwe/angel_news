@@ -17,9 +17,9 @@ AngelConfigurer configureServer(FileSystem fs) {
 
     app.get('/login', (RequestContext req, ResponseContext res) async {
       await res.render('login', {
-        'goto': req.query['goto'],
-        'bad_login': req.query.containsKey('bad_login'),
-        'bad_signup': req.query.containsKey('bad_signup'),
+        'goto': req.queryParameters['goto'],
+        'bad_login': req.queryParameters.containsKey('bad_login'),
+        'bad_signup': req.queryParameters.containsKey('bad_signup'),
       });
     });
 
@@ -29,13 +29,13 @@ AngelConfigurer configureServer(FileSystem fs) {
     var vDir = new VirtualDirectory(app, fs, source: fs.directory('web'));
 
     // Send requests through to the static file handler.
-    app.use(vDir.handleRequest);
+    app.fallback(vDir.handleRequest);
 
     // This route will only run if the request was not terminated by a prior handler.
     // Usually, this is a situation in which you'll want to throw a 404 error.
     //
     // On 404's, let's show the user the text "Unknown.", just like HackerNews.
-    app.use((RequestContext req, ResponseContext res) async {
+    app.fallback((req, res) async {
       if (req.accepts('text/html', strict: true)) {
         res
           ..statusCode = 404

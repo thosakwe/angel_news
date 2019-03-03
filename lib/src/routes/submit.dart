@@ -16,18 +16,18 @@ AngelConfigurer configureServer(Services services) {
   return (Angel app) async {
     app.get(
       '/submit',
-      waterfall([
-        requireAuth,
-        (ResponseContext res) => res.render('submit', {'title': 'Submit'}),
+      chain([
+        requireAuthentication<User>(),
+        (req, res) => res.render('submit', {'title': 'Submit'}),
       ]),
     );
 
     app.post(
       '/submit',
-      waterfall([
-        requireAuth,
+      chain([
+        requireAuthentication<User>(),
         validate(submitValidator),
-        submit,
+        ioc(submit),
       ]),
     );
   };
@@ -39,10 +39,10 @@ Future submit(RequestContext req, ResponseContext res, Services services,
   var rgxAskAN = new RegExp(r'^ask an:');
   var rgxShowAN = new RegExp(r'^show an:');
 
-  String title = req.body[PostFields.title].trim(),
+  var title = req.bodyAsMap[PostFields.title].trim() as String,
       canonicalTitle = title.trim().toLowerCase();
-  String link = req.body[PostFields.link]?.trim();
-  String text = req.body[PostFields.text]?.trim();
+  var link = req.bodyAsMap[PostFields.link]?.trim() as String;
+  var text = req.bodyAsMap[PostFields.text]?.trim() as String;
 
   var type = rgxAskAN.hasMatch(canonicalTitle)
       ? PostType.askAN
@@ -60,9 +60,9 @@ Future submit(RequestContext req, ResponseContext res, Services services,
   // Make sure no links are repeated.
   if (link?.isNotEmpty == true) {
     var canonicalLink = canonicalizer.canonicalize(link);
-    Iterable<Map> existing = await services.postService.index({
+    var existing = await services.postService.index({
       'query': {PostFields.link: canonicalLink}
-    });
+    }) as Iterable<Map>;
 
     if (existing.isNotEmpty) {
       post = PostSerializer.fromMap(existing.first);

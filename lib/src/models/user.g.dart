@@ -6,6 +6,7 @@ part of 'user.dart';
 // JsonModelGenerator
 // **************************************************************************
 
+@generatedSerializable
 class User extends _User {
   User(
       {this.id,
@@ -66,7 +67,79 @@ class User extends _User {
         other.updatedAt == updatedAt;
   }
 
+  @override
+  int get hashCode {
+    return hashObjects(
+        [id, username, password, salt, karma, createdAt, updatedAt]);
+  }
+
   Map<String, dynamic> toJson() {
     return UserSerializer.toMap(this);
   }
+}
+
+// **************************************************************************
+// SerializerGenerator
+// **************************************************************************
+
+abstract class UserSerializer {
+  static User fromMap(Map map) {
+    return new User(
+        id: map['id'] as String,
+        username: map['username'] as String,
+        password: map['password'] as String,
+        salt: map['salt'] as String,
+        karma: map['karma'] as int,
+        createdAt: map['created_at'] != null
+            ? (map['created_at'] is DateTime
+                ? (map['created_at'] as DateTime)
+                : DateTime.parse(map['created_at'].toString()))
+            : null,
+        updatedAt: map['updated_at'] != null
+            ? (map['updated_at'] is DateTime
+                ? (map['updated_at'] as DateTime)
+                : DateTime.parse(map['updated_at'].toString()))
+            : null);
+  }
+
+  static Map<String, dynamic> toMap(_User model) {
+    if (model == null) {
+      return null;
+    }
+    return {
+      'id': model.id,
+      'username': model.username,
+      'password': model.password,
+      'salt': model.salt,
+      'karma': model.karma,
+      'created_at': model.createdAt?.toIso8601String(),
+      'updated_at': model.updatedAt?.toIso8601String()
+    };
+  }
+}
+
+abstract class UserFields {
+  static const List<String> allFields = <String>[
+    id,
+    username,
+    password,
+    salt,
+    karma,
+    createdAt,
+    updatedAt
+  ];
+
+  static const String id = 'id';
+
+  static const String username = 'username';
+
+  static const String password = 'password';
+
+  static const String salt = 'salt';
+
+  static const String karma = 'karma';
+
+  static const String createdAt = 'created_at';
+
+  static const String updatedAt = 'updated_at';
 }
