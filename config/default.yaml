@@ -2,3 +2,7 @@
 debug: true
 foo: $FOO # Key from environment
 jwt_secret: "83163408R12787575075658056027380"
+postgres:
+  database_name: angel_news
+  username: postgres
+  password: postgres

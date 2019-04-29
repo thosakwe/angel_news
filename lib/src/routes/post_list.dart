@@ -1,118 +1,83 @@
 import 'dart:async';
 import 'package:angel_framework/angel_framework.dart';
+import 'package:angel_orm/angel_orm.dart';
 import 'package:angel_paginate/angel_paginate.dart';
 import 'package:hn/src/models/models.dart';
-import 'package:hn/src/services.dart';
 import 'package:pooled_map/pooled_map.dart';
 
-AngelConfigurer configureServer(Services services) {
-  return (Angel app) async {
-    app.get('/post/:id', (req, res) async {
-      var id = req.params['id'];
-      var post = await services.postService
-          .read(id)
-          .then((map) => PostSerializer.fromMap(map as Map));
-      var user = await services.userService
-          .read(post.userId)
-          .then((map) => UserSerializer.fromMap(map as Map));
+Future<void> configureServer(Angel app) async {
+  var executor = app.container.make<QueryExecutor>();
 
-      await res.render('post', {
-        'title': post.title,
-        'post': post.copyWith(user: user),
-      });
+  app.get('/post/int:id', (req, res) async {
+    var id = req.params['id'] as int;
+    var query = PostQuery()..where.id.equals(id);
+    var post = await query.getOne(executor);
+    if (post == null) throw AngelHttpException.notFound();
+
+    await res.render('post', {
+      'title': post.title,
+      'post': post,
     });
+  });
 
-    app.get(
-        '/',
-        showPostList(
-          null,
-          (req) => {},
-          filter: filterTopPosts,
-        ));
+  app.get(
+      '/',
+      showPostList(
+        null,
+        (req, query) {
+          filterTopPosts(query);
+        },
+      ));
 
-    app.get(
-        '/new',
-        showPostList(
-          'New Links',
-          (req) => {},
-          filter: (users) =>
-              users..sort((a, b) => b.createdAt.compareTo(a.createdAt)),
-        ));
+  app.get(
+      '/new',
+      showPostList(
+        'New Links',
+        (req, query) {
+          query.orderBy(PostFields.createdAt, descending: true);
+        },
+      ));
 
-    app.get(
-        '/show',
-        showPostList(
-          'Show',
-          (req) => queryByType(PostType.showAN),
-          filter: filterTopPosts,
-        ));
+  app.get(
+      '/show',
+      showPostList(
+        'Show',
+        queryByType(PostType.showAN),
+      ));
 
-    app.get(
-        '/ask',
-        showPostList(
-          'Ask',
-          (req) => queryByType(PostType.askAN),
-          filter: filterTopPosts,
-        ));
+  app.get(
+      '/ask',
+      showPostList(
+        'Ask',
+        queryByType(PostType.askAN),
+      ));
+}
+
+FutureOr<void> Function(RequestContext, PostQuery) queryByType(PostType type) {
+  return (req, query) {
+    filterTopPosts(query);
+    query.where.type.equals(type);
   };
 }
 
-Map<String, dynamic> queryByType(PostType type) =>
-    {PostFields.type: PostType.values.indexOf(type)};
-
-Iterable<Post> filterTopPosts(List<Post> posts) => posts..sort(sortTopPosts);
+void filterTopPosts(PostQuery query) {
+  query.orderBy(PostFields.karma, descending: true);
+}
 
 int sortTopPosts(Post a, Post b) {
   return b.karma.compareTo(a.karma);
 }
 
 RequestHandler showPostList(
-    String title, Map<String, dynamic> Function(RequestContext) query,
-    {Iterable<Post> Function(List<Post>) filter}) {
-  return ioc((Services services, RequestContext req, ResponseContext res,
-      {user}) async {
-    var paginator = await fetchPosts(query(req), req, services, filter: filter);
-    await res.render('posts', {'title': title, 'paginator': paginator});
-  });
-}
-
-/// Fetches posts from the database, and paginates them.
-Future<Paginator<Post>> fetchPosts(
-    Map<String, dynamic> query, RequestContext req, Services services,
-    {Iterable<Post> Function(List<Post>) filter}) async {
-  Future index;
-
-  if (query.isEmpty) {
-    index = services.postService.index();
-  } else {
-    index = services.postService.index({'query': query});
-  }
-
-  var posts = await index.then((it) => it.map(PostSerializer.fromMap))
-      as Iterable<Post>;
-
-  // Fetch the user
-  var users = new PooledMap<String, User>();
-
-  posts = await Future.wait<Post>(posts.map((post) async {
-    var user = await users.putIfAbsent(post.userId, () {
-      return services.userService
-          .read(post.userId)
-          .then((map) => UserSerializer.fromMap(map as Map));
-    });
-    return post.copyWith(user: user);
-  }));
-
-  if (filter != null) {
-    posts = filter(posts.toList());
-  }
-
-  var paginator = new Paginator<Post>(
-    posts,
-    itemsPerPage:
-        int.tryParse(req.queryParameters['items_per_page'].toString()) ?? 30,
-  );
-
-  paginator.goToPage(int.tryParse(req.queryParameters['page'].toString()) ?? 1);
-  return paginator;
+    String title, FutureOr<void> Function(RequestContext, PostQuery) queryFn) {
+  return (req, res) async {
+    var executor = req.container.make<QueryExecutor>();
+    var query = PostQuery();
+    var itemsPerPage =
+        int.tryParse(req.queryParameters['items_per_page'].toString()) ?? 30;
+    var page = int.tryParse(req.queryParameters['page'].toString()) ?? 1;
+    await queryFn(req, query);
+    var posts = await query.get(executor);
+    await res.render('posts', {'title': title, 'paginator': posts});
+  };
 }

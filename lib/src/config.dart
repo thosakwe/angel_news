@@ -3,6 +3,7 @@ import 'package:angel_configuration/angel_configuration.dart';
 import 'package:angel_framework/angel_framework.dart';
 import 'package:angel_jael/angel_jael.dart';
 import 'package:file/file.dart';
+import 'orm.dart' as orm;
 
 AngelConfigurer configureServer(FileSystem fs) {
   return (Angel app) async {
@@ -16,6 +17,9 @@ AngelConfigurer configureServer(FileSystem fs) {
 
     // All loaded configuration will be added to `app.configuration`.
     app.logger.config('Loaded configuration: ${app.configuration}');
+
+    // Connect to PostgreSQL.
+    await app.configure(orm.configureServer);
 
     // Configure our application to render HTML templates using Jael,
     // a templating engine that supports expression literals, loops,

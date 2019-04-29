@@ -1,39 +1,37 @@
 import 'dart:async';
 import 'package:angel_auth/angel_auth.dart';
 import 'package:angel_framework/angel_framework.dart';
+import 'package:angel_orm/angel_orm.dart';
 import 'package:angel_validate/server.dart';
 import 'package:hn/src/models/models.dart';
-import 'package:hn/src/services.dart';
 import 'package:canonical_url/canonical_url.dart';
 
-AngelConfigurer configureServer(Services services) {
+void configureServer(Angel app) {
   var submitValidator = new Validator({
     requireField(PostFields.title): isNonEmptyString,
     PostFields.link: isString,
     PostFields.text: isString,
   });
 
-  return (Angel app) async {
-    app.get(
-      '/submit',
-      chain([
-        requireAuthentication<User>(),
-        (req, res) => res.render('submit', {'title': 'Submit'}),
-      ]),
-    );
+  app.get(
+    '/submit',
+    chain([
+      requireAuthentication<User>(),
+      (req, res) => res.render('submit', {'title': 'Submit'}),
+    ]),
+  );
 
-    app.post(
-      '/submit',
-      chain([
-        requireAuthentication<User>(),
-        validate(submitValidator),
-        ioc(submit),
-      ]),
-    );
-  };
+  app.post(
+    '/submit',
+    chain([
+      requireAuthentication<User>(),
+      validate(submitValidator),
+      ioc(submit),
+    ]),
+  );
 }
 
-Future submit(RequestContext req, ResponseContext res, Services services,
+Future submit(RequestContext req, ResponseContext res, QueryExecutor executor,
     User user) async {
   var canonicalizer = new UrlCanonicalizer(removeFragment: true);
   var rgxAskAN = new RegExp(r'^ask an:');
@@ -60,30 +58,31 @@ Future submit(RequestContext req, ResponseContext res, Services services,
   // Make sure no links are repeated.
   if (link?.isNotEmpty == true) {
     var canonicalLink = canonicalizer.canonicalize(link);
-    var existing = await services.postService.index({
-      'query': {PostFields.link: canonicalLink}
-    }) as Iterable<Map>;
+    var query = PostQuery()..where.link.equals(canonicalLink);
+    var existing = await query.get(executor);
 
     if (existing.isNotEmpty) {
-      post = PostSerializer.fromMap(existing.first);
+      post = existing.first;
     } else {
       link = canonicalLink;
     }
   }
 
   if (post == null) {
-    post = new Post(
-        userId: user.id,
-        type: type,
-        title: title,
-        text: text,
-        link: link,
-        karma: 0);
+    var query = PostQuery();
+    var now = DateTime.now().toUtc();
+    query.values
+      ..userId = user.idAsInt
+      ..type = type
+      ..title = title
+      ..text = text
+      ..link = link
+      ..karma = 0
+      ..createdAt = now
+      ..updatedAt = now;
 
     // Insert the post into the database, and deserialize it.
-    post = await services.postService
-        .create(post.toJson())
-        .then((map) => PostSerializer.fromMap(map as Map));
+    post = await query.insert(executor);
   }
 
   // Take the user to view the post...
